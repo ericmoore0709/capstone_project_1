@@ -1,0 +1,12 @@
+{% block flashes %}
+{% with flashes = get_flashed_messages(with_categories=true) %}
+{% if flashes %}
+<div class="alert alert-dismissible fade show rounded w-25 mt-0 mb-5 mx-auto" role="alert">
+    {% for category, flash in flashes %}
+    <div class="{{'my-1 ' + category + ' bg-' + category + ' text-light'}}">{{flash}}</div>
+    {% endfor %}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
+{% endwith %}
+{% endblock %}

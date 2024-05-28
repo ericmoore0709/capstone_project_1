@@ -1,0 +1,10 @@
+{% block errors %}
+{% if errors %}
+<div id="errors" class="alert alert-danger alert-dismissible fade show rounded w-25 mt-0 mb-5 mx-auto" role="alert">
+    {% for error in errors %}
+    <div class="my-1 error">{{error}}</div>
+    {% endfor %}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
+{% endblock %}
