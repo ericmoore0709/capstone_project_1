@@ -1,0 +1,9 @@
+{% extends 'layout/base.html' %}
+{% block content %}
+<h1>Playlists</h1>
+<ul>
+    {% for playlist in playlists.get('items') %}
+    <li>{{playlist.name}}</li>
+    {% endfor %}
+</ul>
+{% endblock %}

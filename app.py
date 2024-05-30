@@ -14,6 +14,8 @@ SPOTIFY_CLIENT_SECRET = os.environ.get('SPOTIFY_CLIENT_SECRET')
 SPOTIFY_CLIENT_SCOPE = os.environ.get('SPOTIFY_CLIENT_SCOPE')
 SPOTIFY_CLIENT_REDIRECT_URI = os.environ.get('SPOTIFY_CLIENT_REDIRECT_URI')
 
+BASE_URI = 'https://api.spotify.com/v1'
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = str(uuid4())
 
@@ -44,7 +46,7 @@ def authorize():
 
         return redirect(AUTH_URL_STR)
     except:
-        flash('Failed to retrieve Spotify authorization endpoint.', 'error')
+        flash('Failed to retrieve Spotify authorization endpoint.', 'danger')
         return redirect('/')
 
 
@@ -75,7 +77,7 @@ def on_redirect():
             print(token_response)
 
             if 'error' in token_response:
-                flash(token_response['error'], 'error')
+                flash(token_response['error'], 'danger')
                 return redirect('/')
 
             else:
@@ -87,7 +89,7 @@ def on_redirect():
             error = request.args.get('error', '')
             if error:
                 print(error)
-                flash(error, 'error')
+                flash(error, 'danger')
                 return redirect('/')
 
         return redirect('/')
@@ -99,7 +101,7 @@ def on_redirect():
 @app.get('/dashboard')
 def display_dashboard():
     if not session.get('token'):
-        flash('No session detected. Please Authorize.', 'error')
+        flash('No session detected. Please Authorize.', 'danger')
         return redirect('/')
 
     return render_template('dashboard.html')
@@ -110,3 +112,22 @@ def process_logout():
     session.pop('state')
     session.pop('token')
     return redirect('/')
+
+
+@app.get('/playlists')
+def display_playlists():
+    token = session.get('token', '')
+    if not token:
+        return redirect('/')
+
+    try:
+        playlists = requests.get(
+            (BASE_URI + '/me/playlists'), headers={'Authorization': ('Bearer ' + token)})
+        print(playlists.status_code)
+        print(playlists.json())
+        return render_template('playlists.html', playlists=playlists.json())
+
+    except Exception as err:
+        print(type(err).__name__ + ': ' + str(err))
+        flash('Failed to retrieve playlists.', 'danger')
+        return redirect('/dashboard')
