@@ -1,0 +1,28 @@
+{% extends 'layout/base.html' %}
+{% block content %}
+<h1>{{playlist.name}}</h1>
+<div class="container d-flex flex-column mx-auto">
+    {% for item in playlist.get('tracks').get('items') %}
+    <div class="card card mx-auto my-2 mb-1" style="max-width: 540px;">
+        <div class="row g-0">
+            <div class="col-md-4">
+                <img src="{{item.track.album.images[0].url}}" class="img-fluid rounded-start" alt="...">
+            </div>
+            <div class="col-md-8">
+                <div class="card-body">
+                    <a href="{{'/track/' + item.track.id | string }}">
+                        <h5 class="card-title text-light">{{item.track.name}}</h5>
+                    </a>
+                    <p class="card-text text-light">{{item.track.artists[0].name}}</p>
+                </div>
+                <div class="mb-0 mt-4">
+                    <button class="btn btn-secondary border">Move</button>
+                    <button class="btn btn-danger border">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% endfor %}
+</div>
+{% endblock %}

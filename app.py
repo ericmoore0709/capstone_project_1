@@ -74,8 +74,6 @@ def on_redirect():
                                            }
                                            ).json()
 
-            print(token_response)
-
             if 'error' in token_response:
                 flash(token_response['error'], 'danger')
                 return redirect('/')
@@ -121,13 +119,35 @@ def display_playlists():
         return redirect('/')
 
     try:
-        playlists = requests.get(
-            (BASE_URI + '/me/playlists'), headers={'Authorization': ('Bearer ' + token)})
-        print(playlists.status_code)
-        print(playlists.json())
-        return render_template('playlists.html', playlists=playlists.json())
+        playlists_json = requests.get(
+            (BASE_URI + '/me/playlists'), headers={'Authorization': ('Bearer ' + token)}).json()
+        playlists = playlists_json.get('items', [])
+        return render_template('playlists.html', playlists=playlists)
 
     except Exception as err:
         print(type(err).__name__ + ': ' + str(err))
         flash('Failed to retrieve playlists.', 'danger')
         return redirect('/dashboard')
+
+
+@app.get('/playlists/<string:playlist_id>')
+def display_playlist_details(playlist_id: str):
+
+    token = session.get('token', '')
+    if not token:
+        return redirect('/')
+
+    # try:
+    playlist_response = requests.get(
+        (BASE_URI + '/playlists/' + playlist_id),
+        headers={'Authorization': ('Bearer ' + token)})
+
+    if playlist_response.status_code == 200:
+        playlist_json = playlist_response.json()
+        # tracks = playlist_json.get('tracks').get('items')[0].get('track').get('name')
+        return render_template('playlist.html', playlist=playlist_json)
+
+    # except Exception as err:
+    #     print(type(err).__name__ + ': ' + str(err))
+    #     flash('Failed to retrieve playlist details.', 'danger')
+    #     return redirect('/playlists')
