@@ -80,6 +80,7 @@ def on_redirect():
 
             else:
                 session['token'] = token_response['access_token']
+                session['user_id'] = _get_userid()
                 flash('Authorization successful!', 'success')
                 return redirect('/dashboard')
 
@@ -137,17 +138,62 @@ def display_playlist_details(playlist_id: str):
     if not token:
         return redirect('/')
 
-    # try:
-    playlist_response = requests.get(
-        (BASE_URI + '/playlists/' + playlist_id),
-        headers={'Authorization': ('Bearer ' + token)})
+    try:
+        playlist_response = requests.get(
+            (BASE_URI + '/playlists/' + playlist_id),
+            headers={'Authorization': ('Bearer ' + token)})
 
-    if playlist_response.status_code == 200:
-        playlist_json = playlist_response.json()
-        # tracks = playlist_json.get('tracks').get('items')[0].get('track').get('name')
-        return render_template('playlist.html', playlist=playlist_json)
+        if playlist_response.status_code == 200:
+            playlist_json = playlist_response.json()
+            return render_template('playlist.html', playlist=playlist_json)
 
-    # except Exception as err:
-    #     print(type(err).__name__ + ': ' + str(err))
-    #     flash('Failed to retrieve playlist details.', 'danger')
-    #     return redirect('/playlists')
+    except Exception as err:
+        print(type(err).__name__ + ': ' + str(err))
+        flash('Failed to retrieve playlist details.', 'danger')
+        return redirect('/playlists')
+
+
+@app.post('/searchbar')
+def retrieve_search_results():
+
+    token = session.get('token', '')
+    if not token:
+        return jsonify({'error': 'Failed to authenticate user.'})
+
+    try:
+        search_term = request.json.get('q', '')
+        search_types = request.json.get('type')
+
+        search_request = requests.get(
+            (BASE_URI + '/search'), params={'q': search_term, 'limit': 5, 'type': search_types}, headers={'Authorization': ('Bearer ' + token)})
+
+        print(search_request.status_code)
+        print(search_request.json())
+
+        return search_request.json()
+
+    except Exception as err:
+        flash('Backend search failed. Please try again.', 'danger')
+        return redirect('/')
+
+
+def _get_userid():
+    token = session.get('token', '')
+    if not token:
+        return
+
+    try:
+        user_data = requests.get(
+            (BASE_URI + '/me'), headers={'Authorization': ('Bearer ' + token)})
+
+        if user_data.status_code == 200:
+            user_id = user_data.json().get('id')
+            if user_id:
+                return user_id
+            else:
+                raise Exception('Failed to retrieve user_id from user_data.')
+        else:
+            raise Exception(
+                ('user_data returned status code of ' + str(user_data.status_code)))
+    except Exception as err:
+        print(err)

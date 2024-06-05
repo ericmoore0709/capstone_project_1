@@ -6,3 +6,14 @@
 a {
     color: cornflowerblue;
 }
+
+#searchbar_results_container {
+    z-index: 5;
+    top: 100%;
+    left: 0;
+}
+
+.dropdown-menu .dropdown-item:hover {
+    background-color: red;
+    color: #262655;
+}
