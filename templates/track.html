@@ -1,0 +1,22 @@
+{% extends 'layout/base.html' %}
+{% block content %}
+<div class="container d-flex flex-column w-100 mx-auto">
+    <div class="card mx-auto my-2 mb-1" style="max-width: 840px;">
+        <div class="row g-0">
+            <div class="col-3">
+                <img src="{{track.album.images[0].url}}" class="img-fluid rounded-start" alt="Album Image">
+            </div>
+            <div class="col-7 d-flex align-items-center">
+                <div class="card-body">
+                    <h5 class="card-title text-light">{{track.name}}</h5>
+                    </a>
+                    <p class="card-text text-light">{{track.artists[0].name}}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <form>
+        <!-- add user-owned playlist dropdown and "add to playlist" button here -->
+    </form>
+</div>
+{% endblock %}

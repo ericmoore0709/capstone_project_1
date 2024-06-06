@@ -166,14 +166,33 @@ def retrieve_search_results():
         search_request = requests.get(
             (BASE_URI + '/search'), params={'q': search_term, 'limit': 5, 'type': 'track'}, headers={'Authorization': ('Bearer ' + token)})
 
-        print(search_request.status_code)
-        print(search_request.json())
-
         return search_request.json()
 
     except Exception as err:
         flash('Backend search failed. Please try again.', 'danger')
         return redirect('/')
+
+
+@app.get('/track/<string:track_id>')
+def display_track(track_id: str):
+    token = session.get('token', '')
+    if not token:
+        return jsonify({'error': 'Failed to authenticate user.'})
+
+    try:
+        track_response = requests.get(
+            (BASE_URI + '/tracks/' + track_id), headers={'Authorization': ('Bearer ' + token)})
+
+        print(track_response.status_code)
+        print(track_response.json())
+
+        return render_template('track.html', track=track_response.json())
+
+    except Exception as err:
+        print(err)
+        flash('Failed to retrieve track. Please try again.', 'danger')
+        return redirect('/')
+
 
 def _get_userid():
     token = session.get('token', '')
