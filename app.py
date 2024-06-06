@@ -162,10 +162,9 @@ def retrieve_search_results():
 
     try:
         search_term = request.json.get('q', '')
-        search_types = request.json.get('type')
 
         search_request = requests.get(
-            (BASE_URI + '/search'), params={'q': search_term, 'limit': 5, 'type': search_types}, headers={'Authorization': ('Bearer ' + token)})
+            (BASE_URI + '/search'), params={'q': search_term, 'limit': 5, 'type': 'track'}, headers={'Authorization': ('Bearer ' + token)})
 
         print(search_request.status_code)
         print(search_request.json())
@@ -175,7 +174,6 @@ def retrieve_search_results():
     except Exception as err:
         flash('Backend search failed. Please try again.', 'danger')
         return redirect('/')
-
 
 def _get_userid():
     token = session.get('token', '')

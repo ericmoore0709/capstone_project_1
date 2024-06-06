@@ -1,9 +1,6 @@
 $('#search_input').keyup((e) => {
     e.preventDefault();
     const searchTerm = $(e.target).val().trim();
-    const selectedTypes = $('input[type=checkbox]:checked').map(function () {
-        return this.value;
-    }).get();
 
     if (!searchTerm) {
         $('#searchbar_results_list').empty();
@@ -11,8 +8,7 @@ $('#search_input').keyup((e) => {
     }
 
     axios.post('http://localhost:5000/searchbar', {
-        q: searchTerm,
-        type: selectedTypes
+        q: searchTerm
     })
         .then((result) => {
             const tracks = result.data.tracks.items;
@@ -20,7 +16,21 @@ $('#search_input').keyup((e) => {
 
             if (tracks.length > 0) {
                 tracks.forEach((track) => {
-                    let $li = $('<li></li>').addClass('list-group-item').text(track.name);
+                    const trackName = track.name;
+                    const albumImage = track.album.images[0]?.url || 'default-image-url.jpg';  // Fallback if no image
+                    const artistName = track.artists[0].name;
+
+                    let $li = $(`
+                        <li class="list-group-item p-0">
+                            <div class="d-flex">
+                                <img src="${albumImage}" class="img-fluid rounded" alt="Album Image" style="width: 50px; height: 50px; object-fit: cover;">
+                                <div>
+                                    <p class="mb-1"><strong>${trackName}</strong></p>
+                                    <p class="mb-0"><small>${artistName}</small></p>
+                                </div>
+                            </div>
+                        </li>
+                    `);
                     $('#searchbar_results_list').append($li);
                 });
             } else {
