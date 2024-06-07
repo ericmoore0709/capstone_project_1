@@ -1,6 +1,9 @@
 {% extends 'layout/base.html' %}
 {% block content %}
 <h1>{{playlist.name}}</h1>
+{% if playlist.owner.id == session['user_id'] %}
+<button id="playlist_delete" class="btn btn-danger mb-4">Delete</button>
+{% endif %}
 <div class="container d-flex flex-column w-100 mx-auto">
     {% for item in playlist.get('tracks').get('items') %}
     <div class="card mx-auto my-2 mb-1" style="max-width: 840px;">
@@ -18,8 +21,11 @@
             </div>
             {% if playlist.owner.id == session['user_id'] %}
             <div class="col-2 d-flex flex-column justify-content-center align-items-center">
-                <button class="btn btn-secondary mb-1">Move</button>
-                <button class="btn btn-danger">Remove</button>
+                <form class="track_remove">
+                    <input name="track_uri" type="hidden" value="{{item.track.uri}}" />
+                    <input name="playlist_id" type="hidden" value="{{playlist.id}}" />
+                    <button class="btn btn-danger">Remove</button>
+                </form>
             </div>
             {% endif %}
         </div>

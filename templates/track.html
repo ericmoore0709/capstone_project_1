@@ -15,8 +15,19 @@
             </div>
         </div>
     </div>
-    <form>
-        <!-- add user-owned playlist dropdown and "add to playlist" button here -->
+    <form id="add_track_to_playlist_form">
+        <h5>Add track to playlist</h5>
+        <input id="input_track_uri" name="track_uri" type="hidden" value="{{track.uri}}" />
+        <div class="container w-50 mx-auto d-flex">
+            <select id="select_playlist_id" name="playlist_id" class="form-select">
+                <option value="">Select playlist...</option>
+                {% for id, name in playlists %}
+                <option value="{{id}}">{{name}}</option>
+                {% endfor %}
+            </select>
+            <button class="btn btn-primary">Add</button>
+        </div>
+        <div id="addtrack_results_container" class="container w-50 mx-auto"></div>
     </form>
 </div>
 {% endblock %}

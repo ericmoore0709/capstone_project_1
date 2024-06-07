@@ -1,4 +1,15 @@
-$('#search_input').keyup((e) => {
+function showAlert(message, type) {
+    const alertContainer = $('#alert-container');
+    const alert = $(`
+        <div class="alert alert-${type} alert-dismissible fade show w-50 mx-auto" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    `);
+    alertContainer.append(alert);
+}
+
+$('#search_input').keyup(async (e) => {
     e.preventDefault();
     const searchTerm = $(e.target).val().trim();
 
@@ -7,7 +18,7 @@ $('#search_input').keyup((e) => {
         return;
     }
 
-    axios.post('http://localhost:5000/searchbar', {
+    await axios.post('http://localhost:5000/searchbar', {
         q: searchTerm
     })
         .then((result) => {
@@ -48,4 +59,69 @@ $('#search_input').keyup((e) => {
             $('#searchbar_results_list').append($li);
         });
 
-})
+});
+
+$('#add_track_to_playlist_form').submit(async (e) => {
+    e.preventDefault();
+
+    // clear result message
+    $('#addtrack_results_container').empty();
+
+    // get the track uri and playlist id from the form
+    const trackUri = $('#input_track_uri').val();
+    const playlistId = $('#select_playlist_id').val();
+
+    if (!playlistId) {
+        // pop up an error message and return
+        return;
+    }
+
+    let $resultMsg = $('<p></p>').addClass('list-group-item');
+
+    // create backend API request
+    await axios.post('http://localhost:5000/addtrack', {
+        'track_uri': trackUri,
+        'playlist_id': playlistId
+    })
+        .then((result) => {
+
+            if (result.data.error) {
+                // pop up error message
+                $resultMsg.addClass('list-group-item-danger').text('Failed to add track to playlist.');
+            }
+            else {
+                // pop up success message
+                $resultMsg.addClass('list-group-item-success').text('Track added to playlist.');
+            }
+        })
+        .catch((err) => {
+            console.log(err);
+            // pop up error message
+            $resultMsg.addClass('list-group-item-danger').text('Something went wrong.');
+        })
+        .finally(() => {
+            $('#addtrack_results_container').append($resultMsg)
+        });
+
+});
+
+$('.track_remove').submit(async function (e) {
+    e.preventDefault();
+
+    const trackUri = $(this).find('input[name="track_uri"]').val();
+    const playlistId = $(this).find('input[name="playlist_id"]').val();
+
+    await axios.delete(`http://localhost:5000/playlists/${playlistId}/tracks`, {
+        data: { 'track_uri': trackUri }
+    })
+        .then((result) => {
+            console.log(result);
+            $(this).closest('.card').remove();
+            showAlert('Track removed from playlist.', 'success');
+        })
+        .catch((err) => {
+            console.error(err);
+            showAlert('Failed to remove track from playlist.', 'danger');
+        });
+
+});

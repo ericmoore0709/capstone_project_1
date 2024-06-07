@@ -18,6 +18,7 @@
 <body>
     <div id="root" class="text-center">
         {% include 'layout/fragments/header.html' %}
+        <div id="alert-container" class="alert-container"></div>
         {% include 'layout/fragments/flashes.html' %}
         {% block content %}<h1>Default Content</h1>{% endblock %}
         {% include 'layout/fragments/errors.html' %}

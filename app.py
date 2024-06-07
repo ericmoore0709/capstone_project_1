@@ -158,7 +158,7 @@ def retrieve_search_results():
 
     token = session.get('token', '')
     if not token:
-        return jsonify({'error': 'Failed to authenticate user.'})
+        return redirect('/')
 
     try:
         search_term = request.json.get('q', '')
@@ -177,21 +177,84 @@ def retrieve_search_results():
 def display_track(track_id: str):
     token = session.get('token', '')
     if not token:
-        return jsonify({'error': 'Failed to authenticate user.'})
+        return redirect('/')
 
     try:
         track_response = requests.get(
             (BASE_URI + '/tracks/' + track_id), headers={'Authorization': ('Bearer ' + token)})
 
-        print(track_response.status_code)
-        print(track_response.json())
+        playlist_response = requests.get(
+            (BASE_URI + '/me/playlists'), headers={'Authorization': ('Bearer ' + token)}).json()
 
-        return render_template('track.html', track=track_response.json())
+        playlists = [(playlist.get('id'), playlist.get('name'))
+                     for playlist in playlist_response.get('items') if playlist.get('owner').get('id') == session['user_id']]
+
+        return render_template('track.html', track=track_response.json(), playlists=playlists)
 
     except Exception as err:
         print(err)
         flash('Failed to retrieve track. Please try again.', 'danger')
         return redirect('/')
+
+
+@app.post('/addtrack')
+def add_track_to_playlist():
+    token = session.get('token', '')
+    if not token:
+        return redirect('/')
+
+    # get track id and playlist id from request
+    track_uri = request.json.get('track_uri', '')
+    playlist_id = request.json.get('playlist_id', '')
+
+    print(track_uri)
+    print(playlist_id)
+
+    if not playlist_id:
+        return jsonify({'error': 'Playlist required.'})
+
+    try:
+
+        # attempt to call spotify API to append track to playlist
+        action_response = requests.post(
+            (BASE_URI + '/playlists/' + playlist_id + '/tracks'),
+            json={'uris': [track_uri]},
+            headers={'Authorization': ('Bearer ' + token)}
+        )
+
+        print(action_response.status_code)
+        print(action_response.json())
+
+        return action_response.json()
+
+    except Exception as err:
+        print(err)
+        return jsonify({'error': 'internal error occurred.'})
+
+
+@app.delete('/playlists/<string:playlist_id>/tracks')
+def remove_track(playlist_id: str):
+    # boot out user if not authenticated
+    token = session.get('token', '')
+    if not token:
+        return redirect('/')
+
+    # get track URI from request
+    track_uri = request.json.get('track_uri', '')
+
+    # make API call
+    remove_response = requests.delete(
+        (f'{BASE_URI}/playlists/{playlist_id}/tracks'),
+        json={'tracks': [{'uri': track_uri}]},
+        headers={'Authorization': f'Bearer {token}',
+                 'Content-Type': 'application/json'}
+    )
+
+    print(remove_response.status_code)
+    print(remove_response.json())
+
+    # return response
+    return jsonify(remove_response.json(), remove_response.status_code)
 
 
 def _get_userid():

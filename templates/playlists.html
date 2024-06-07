@@ -4,7 +4,11 @@
 <div class="container d-flex flex-wrap mx-auto">
     {% for playlist in playlists %}
     <div class="card mx-auto my-2" style="width: 18rem;">
+        {% if playlist.images %}
         <img src="{{playlist.images[0].url}}" class="card-img-top" alt="...">
+        {% else %}
+        <img src="https://cdn.pixabay.com/photo/2017/01/09/20/11/music-1967480_1280.png" class="card-img-top" alt="...">
+        {% endif %}
         <div class="card-body">
             <a href="{{'/playlists/' + playlist.id | string }}">
                 <h5 class="card-title text-light">{{playlist.name}}</h5>
