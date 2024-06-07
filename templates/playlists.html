@@ -1,7 +1,37 @@
 {% extends 'layout/base.html' %}
 {% block content %}
 <h1>Playlists</h1>
-<div class="container d-flex flex-wrap mx-auto">
+
+<!-- Playlist Create Form Button -->
+<button id="playlist_create_btn" class="btn btn-success mx-auto mb-2" data-bs-toggle="modal"
+    data-bs-target="#create_playlist_modal">Create</button>
+
+<!-- Playlist Create Form Modal -->
+<div class="modal fade" id="create_playlist_modal" tabindex="-1" aria-labelledby="create_playlist_modal_label"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-light">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="create_playlist_modal_label">Create a playlist.</h1>
+                <button type="button" class="btn-close border-light" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="playlist_create_form">
+                    <input id="playlist_title" class="form-control w-50 mx-auto my-1" name="title"
+                        placeholder="Playlist title" />
+                    <span id="title_error" class="text-danger"></span>
+                    <input id="playlist_description" class="form-control w-75 mx-auto my-1" name="description"
+                        placeholder="Playlist description (optional)..." />
+                    <input type="submit" class="btn btn-primary my-1" value="Create Playlist" />
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main content -->
+<div id="playlists_container" class="container d-flex flex-wrap mx-auto">
     {% for playlist in playlists %}
     <div class="card mx-auto my-2" style="width: 18rem;">
         {% if playlist.images %}

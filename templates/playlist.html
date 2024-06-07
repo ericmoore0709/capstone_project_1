@@ -1,9 +1,6 @@
 {% extends 'layout/base.html' %}
 {% block content %}
 <h1>{{playlist.name}}</h1>
-{% if playlist.owner.id == session['user_id'] %}
-<button id="playlist_delete" class="btn btn-danger mb-4">Delete</button>
-{% endif %}
 <div class="container d-flex flex-column w-100 mx-auto">
     {% for item in playlist.get('tracks').get('items') %}
     <div class="card mx-auto my-2 mb-1" style="max-width: 840px;">

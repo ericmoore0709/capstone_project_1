@@ -125,3 +125,47 @@ $('.track_remove').submit(async function (e) {
         });
 
 });
+
+$('#playlist_create_form').submit(async (e) => {
+    e.preventDefault();
+
+    const title = $('#playlist_title').val();
+    const description = $('#playlist_description').val();
+
+    if (!title) {
+        $('#title_error').text('Title is required.');
+        return;
+    }
+
+    await axios.post('http://localhost:5000/playlists', {
+        title: title,
+        description: description
+    })
+        .then((result) => {
+            console.log(result);
+            $('#create_playlist_modal').modal('toggle');
+            showAlert('Playlist created.', 'success');
+
+            const playlist = result.data;
+            const playlistCard = `
+            <div class="card mx-auto my-2" style="width: 18rem;">
+                ${playlist.images && playlist.images[0] ?
+                    `<img src="${playlist.images[0].url}" class="card-img-top" alt="...">` :
+                    `<img src="https://cdn.pixabay.com/photo/2017/01/09/20/11/music-1967480_1280.png" class="card-img-top" alt="...">`}
+                <div class="card-body">
+                    <a href="/playlists/${playlist.id}">
+                        <h5 class="card-title text-light">${playlist.name}</h5>
+                    </a>
+                    <p class="card-text text-light">${playlist.description}</p>
+                </div>
+            </div>`;
+
+            $('#playlists_container').prepend(playlistCard);
+        }).catch((err) => {
+            console.error(err);
+            $('#create_playlist_modal').modal('toggle');
+            showAlert('Failed to create playlist.', 'danger');
+        });
+
+
+});

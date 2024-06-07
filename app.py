@@ -257,6 +257,32 @@ def remove_track(playlist_id: str):
     return jsonify(remove_response.json(), remove_response.status_code)
 
 
+@app.post('/playlists')
+def create_playlist():
+    # boot out user if not authenticated
+    token = session.get('token', '')
+    if not token:
+        return redirect('/')
+
+    # get title and optional description from request
+    title = request.json.get('title', '')
+    description = request.json.get('description', '')
+
+    if not title:
+        return jsonify({'error': 'title is required'})
+
+    playlist_add_response = requests.post(
+        (f'{BASE_URI}/users/{session.get('user_id')}/playlists'),
+        json={'name': title, 'description': description},
+        headers={'Authorization': f'Bearer {token}',
+                 'Content-Type': 'application/json'}
+    )
+
+    print(playlist_add_response.status_code)
+    print(playlist_add_response.json())
+
+    return jsonify(playlist_add_response.json())
+
 def _get_userid():
     token = session.get('token', '')
     if not token:
