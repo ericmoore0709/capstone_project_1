@@ -1,4 +1,4 @@
-"""Flask app for Cupcakes"""
+"""Flask app for Spotify API"""
 from base64 import b64encode
 import requests
 from dotenv import load_dotenv
@@ -52,6 +52,7 @@ def authorize():
 
 @app.get('/redirect')
 def on_redirect():
+    """ Get the user auth token from Spotify and redirect the user."""
 
     try:
         code = request.args.get('code', '')
@@ -99,6 +100,7 @@ def on_redirect():
 
 @app.get('/dashboard')
 def display_dashboard():
+    """ Display the dashboard. """
     if not session.get('token'):
         flash('No session detected. Please Authorize.', 'danger')
         return redirect('/')
@@ -108,6 +110,7 @@ def display_dashboard():
 
 @app.get('/logout')
 def process_logout():
+    """Log out the user."""
     session.pop('state')
     session.pop('token')
     return redirect('/')
@@ -115,6 +118,7 @@ def process_logout():
 
 @app.get('/playlists')
 def display_playlists():
+    """Display the list of playlists saved to the user's library."""
     token = session.get('token', '')
     if not token:
         return redirect('/')
@@ -133,6 +137,7 @@ def display_playlists():
 
 @app.get('/playlists/<string:playlist_id>')
 def display_playlist_details(playlist_id: str):
+    """Display the tracklist of the selected playlist."""
 
     token = session.get('token', '')
     if not token:
@@ -155,6 +160,7 @@ def display_playlist_details(playlist_id: str):
 
 @app.post('/searchbar')
 def retrieve_search_results():
+    """JSON Query tracks for the navbar searchbar."""
 
     token = session.get('token', '')
     if not token:
@@ -175,6 +181,8 @@ def retrieve_search_results():
 
 @app.get('/track/<string:track_id>')
 def display_track(track_id: str):
+    """Display the selected track (likely to add to a playlist)."""
+
     token = session.get('token', '')
     if not token:
         return redirect('/')
@@ -199,6 +207,7 @@ def display_track(track_id: str):
 
 @app.post('/addtrack')
 def add_track_to_playlist():
+    """Add selected track to selected playlist."""
     token = session.get('token', '')
     if not token:
         return redirect('/')
@@ -234,6 +243,7 @@ def add_track_to_playlist():
 
 @app.delete('/playlists/<string:playlist_id>/tracks')
 def remove_track(playlist_id: str):
+    """Remove selected track from playlist."""
     # boot out user if not authenticated
     token = session.get('token', '')
     if not token:
@@ -259,6 +269,7 @@ def remove_track(playlist_id: str):
 
 @app.post('/playlists')
 def create_playlist():
+    """Create a playlist."""
     # boot out user if not authenticated
     token = session.get('token', '')
     if not token:
@@ -283,7 +294,9 @@ def create_playlist():
 
     return jsonify(playlist_add_response.json())
 
+
 def _get_userid():
+    """Returns the user ID from the auth token."""
     token = session.get('token', '')
     if not token:
         return
