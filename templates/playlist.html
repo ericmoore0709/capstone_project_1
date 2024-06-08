@@ -2,6 +2,7 @@
 {% block content %}
 <h1>{{playlist.name}}</h1>
 <div class="container d-flex flex-column w-100 mx-auto">
+    {% if playlist.get('tracks').get('items') %}
     {% for item in playlist.get('tracks').get('items') %}
     <div class="card mx-auto my-2 mb-1" style="max-width: 840px;">
         <div class="row g-0">
@@ -28,5 +29,10 @@
         </div>
     </div>
     {% endfor %}
+    {% else %}
+    <div class="text-center">
+        <p>This playlist is currently empty. Search for some tracks to add!</p>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

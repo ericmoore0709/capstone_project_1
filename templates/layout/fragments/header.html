@@ -1,33 +1,28 @@
 {% block header %}
-<nav class="navbar navbar-expand-lg">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
-        <a class="navbar-brand text-light" href="/">Capstone</a>
-        <button id="navbar-toggle-button" class="navbar-toggler" type="button" data-bs-toggle="collapse"
-            data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
-            aria-label="Toggle navigation">
+        <a class="navbar-brand" href="/">Capstone</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            {% if session['token'] %}
+            {% if session.get('token') %}
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item">
-                    <a class="nav-link active text-light" aria-current="page" href="/">Home</a>
+                    <a class="nav-link active" aria-current="page" href="/">Home</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-light" href="/playlists">My Playlists</a>
+                    <a class="nav-link" href="/playlists">My Playlists</a>
                 </li>
             </ul>
             <form id="navbar_search_form" class="d-flex position-relative" role="search">
                 <div class="input-group">
-                    <input id="search_input" class="form-control mx-1 col" type="search" placeholder="Search tracks..."
-                        aria-label="Search">
-                    <button class="btn btn-outline-light col-3" type="submit">Search</button>
+                    <input id="search_input" class="form-control mx-1 col" type="search" placeholder="Search tracks..." aria-label="Search tracks">
                 </div>
-                <div id="searchbar_results_container" class="position-absolute w-100">
+                <div id="searchbar_results_container" class="position-absolute w-100 bg-white border">
                     <ul id="searchbar_results_list" class="list-group"></ul>
                 </div>
             </form>
-
             {% endif %}
         </div>
     </div>
