@@ -1,3 +1,8 @@
+/**
+ * Appends an alert to the alert container.
+ * @param {string} message the alert message
+ * @param {string} type the Bootstrap color type ('success', 'info', 'warning', 'danger', etc.)
+ */
 function showAlert(message, type) {
     const alertContainer = $('#alert-container');
     const alert = $(`
@@ -9,6 +14,7 @@ function showAlert(message, type) {
     alertContainer.append(alert);
 }
 
+// Manages search bar behavior
 $('#search_input').keyup(async (e) => {
     e.preventDefault();
     const searchTerm = $(e.target).val().trim();
@@ -61,6 +67,7 @@ $('#search_input').keyup(async (e) => {
 
 });
 
+// manages adding track to playlist
 $('#add_track_to_playlist_form').submit(async (e) => {
     e.preventDefault();
 
@@ -102,9 +109,9 @@ $('#add_track_to_playlist_form').submit(async (e) => {
         .finally(() => {
             $('#addtrack_results_container').append($resultMsg)
         });
-
 });
 
+// manages removing track from playlist
 $('.track_remove').submit(async function (e) {
     e.preventDefault();
 
@@ -123,9 +130,9 @@ $('.track_remove').submit(async function (e) {
             console.error(err);
             showAlert('Failed to remove track from playlist.', 'danger');
         });
-
 });
 
+// manages creating playlist
 $('#playlist_create_form').submit(async (e) => {
     e.preventDefault();
 
@@ -166,6 +173,4 @@ $('#playlist_create_form').submit(async (e) => {
             $('#create_playlist_modal').modal('toggle');
             showAlert('Failed to create playlist.', 'danger');
         });
-
-
 });
