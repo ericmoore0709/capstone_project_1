@@ -23,7 +23,7 @@ app.config['SECRET_KEY'] = str(uuid4())
 @app.get('/')
 def index():
     if session.get('token'):
-        return redirect('/dashboard')
+        return render_template('dashboard.html')
     return render_template('/index.html')
 
 
@@ -83,7 +83,7 @@ def on_redirect():
                 session['token'] = token_response['access_token']
                 session['user_id'] = _get_userid()
                 flash('Authorization successful!', 'success')
-                return redirect('/dashboard')
+                return redirect('/')
 
         else:
             error = request.args.get('error', '')
@@ -96,17 +96,6 @@ def on_redirect():
     except:
         flash('Failed to authorize user.')
         return redirect('/')
-
-
-@app.get('/dashboard')
-def display_dashboard():
-    """ Display the dashboard. """
-    if not session.get('token'):
-        flash('No session detected. Please Authorize.', 'danger')
-        return redirect('/')
-
-    return render_template('dashboard.html')
-
 
 @app.get('/logout')
 def process_logout():
@@ -132,7 +121,7 @@ def display_playlists():
     except Exception as err:
         print(type(err).__name__ + ': ' + str(err))
         flash('Failed to retrieve playlists.', 'danger')
-        return redirect('/dashboard')
+        return redirect('/')
 
 
 @app.get('/playlists/<string:playlist_id>')
