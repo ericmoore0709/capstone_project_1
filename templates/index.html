@@ -2,8 +2,11 @@
 {% block content %}
 
 <div id="content" class="container d-flex flex-column justify-content-center align-items-center"
-    style="min-height: 100vh;">
-    <a href="http://localhost:5000/authorize" class="btn btn-primary w-25 mx-auto py-3">Authorize</a>
+    style="min-height: 80vh;">
+    <h1>Welcome to Spotify Playlist Manager</h1>
+    <p>Authorize the app to manage your Spotify playlists.</p>
+    <a href="{{ url_for('authorize') }}" class="btn btn-primary w-25 mx-auto py-3"
+        aria-label="Authorize Spotify">Authorize</a>
 </div>
 
 {% endblock %}
