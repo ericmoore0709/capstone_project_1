@@ -22,8 +22,13 @@ app.config['SECRET_KEY'] = str(uuid4())
 
 @app.get('/')
 def index():
+    """Direct user to either landing page or dashboard."""
+
+    # if logged in, direct to dashboard
     if session.get('token'):
         return render_template('dashboard.html')
+
+    # else, direct to landing page
     return render_template('/index.html')
 
 
@@ -46,6 +51,7 @@ def authorize():
 
         return redirect(AUTH_URL_STR)
     except:
+        # flash error and redirect
         flash('Failed to retrieve Spotify authorization endpoint.', 'danger')
         return redirect('/')
 
@@ -55,6 +61,7 @@ def on_redirect():
     """ Get the user auth token from Spotify and redirect the user."""
 
     try:
+        # get code from Spotify redirection
         code = request.args.get('code', '')
 
         if code:
@@ -75,16 +82,19 @@ def on_redirect():
                                            }
                                            ).json()
 
+            # handle token response error, if exists
             if 'error' in token_response:
                 flash(token_response['error'], 'danger')
                 return redirect('/')
 
+            # set session variables, alert user of success, and redirect
             else:
                 session['token'] = token_response['access_token']
                 session['user_id'] = _get_userid()
                 flash('Authorization successful!', 'success')
                 return redirect('/')
 
+        # if no code was provided, an error occurred.
         else:
             error = request.args.get('error', '')
             if error:
@@ -94,12 +104,16 @@ def on_redirect():
 
         return redirect('/')
     except:
+        # auth failed. Alert and redirect user
         flash('Failed to authorize user.')
         return redirect('/')
+
 
 @app.get('/logout')
 def process_logout():
     """Log out the user."""
+
+    # remove session variables and redirect
     session.pop('state')
     session.pop('token')
     return redirect('/')
@@ -108,11 +122,14 @@ def process_logout():
 @app.get('/playlists')
 def display_playlists():
     """Display the list of playlists saved to the user's library."""
+
+    # boot out user if not authenticated
     token = session.get('token', '')
     if not token:
         return redirect('/')
 
     try:
+        # attempt to retrieve playlists from Spotify
         playlists_json = requests.get(
             (BASE_URI + '/me/playlists'), headers={'Authorization': ('Bearer ' + token)}).json()
         playlists = playlists_json.get('items', [])
@@ -128,20 +145,24 @@ def display_playlists():
 def display_playlist_details(playlist_id: str):
     """Display the tracklist of the selected playlist."""
 
+    # boot out user if not authenticated
     token = session.get('token', '')
     if not token:
         return redirect('/')
 
     try:
+        # attempt to retrieve playlist
         playlist_response = requests.get(
             (BASE_URI + '/playlists/' + playlist_id),
             headers={'Authorization': ('Bearer ' + token)})
 
+        # display the playlist if successful
         if playlist_response.status_code == 200:
             playlist_json = playlist_response.json()
             return render_template('playlist.html', playlist=playlist_json)
 
     except Exception as err:
+        # there was an error. Alert the user and redirect to playlist list page
         print(type(err).__name__ + ': ' + str(err))
         flash('Failed to retrieve playlist details.', 'danger')
         return redirect('/playlists')
@@ -151,6 +172,7 @@ def display_playlist_details(playlist_id: str):
 def retrieve_search_results():
     """JSON Query tracks for the navbar searchbar."""
 
+    # boot out user if not authenticated
     token = session.get('token', '')
     if not token:
         return redirect('/')
@@ -158,6 +180,7 @@ def retrieve_search_results():
     try:
         search_term = request.json.get('q', '')
 
+        # attempt to query five tracks from the given q text.
         search_request = requests.get(
             (BASE_URI + '/search'), params={'q': search_term, 'limit': 5, 'type': 'track'}, headers={'Authorization': ('Bearer ' + token)})
 
@@ -172,17 +195,21 @@ def retrieve_search_results():
 def display_track(track_id: str):
     """Display the selected track (likely to add to a playlist)."""
 
+    # boot out user if not authenticated
     token = session.get('token', '')
     if not token:
         return redirect('/')
 
     try:
+        # retrieve the track from the Spotify API
         track_response = requests.get(
             (BASE_URI + '/tracks/' + track_id), headers={'Authorization': ('Bearer ' + token)})
 
+        # retrieve the list of playlists for playlist selection
         playlist_response = requests.get(
             (BASE_URI + '/me/playlists'), headers={'Authorization': ('Bearer ' + token)}).json()
 
+        # filter in only the id and name of each playlist (because we don't need the rest)
         playlists = [(playlist.get('id'), playlist.get('name'))
                      for playlist in playlist_response.get('items') if playlist.get('owner').get('id') == session['user_id']]
 
@@ -197,6 +224,8 @@ def display_track(track_id: str):
 @app.post('/addtrack')
 def add_track_to_playlist():
     """Add selected track to selected playlist."""
+
+    # boot out user if not authenticated
     token = session.get('token', '')
     if not token:
         return redirect('/')
@@ -205,9 +234,7 @@ def add_track_to_playlist():
     track_uri = request.json.get('track_uri', '')
     playlist_id = request.json.get('playlist_id', '')
 
-    print(track_uri)
-    print(playlist_id)
-
+    # return error if playlist_id not provided
     if not playlist_id:
         return jsonify({'error': 'Playlist required.'})
 
@@ -220,9 +247,6 @@ def add_track_to_playlist():
             headers={'Authorization': ('Bearer ' + token)}
         )
 
-        print(action_response.status_code)
-        print(action_response.json())
-
         return action_response.json()
 
     except Exception as err:
@@ -233,6 +257,7 @@ def add_track_to_playlist():
 @app.delete('/playlists/<string:playlist_id>/tracks')
 def remove_track(playlist_id: str):
     """Remove selected track from playlist."""
+
     # boot out user if not authenticated
     token = session.get('token', '')
     if not token:
@@ -248,9 +273,6 @@ def remove_track(playlist_id: str):
         headers={'Authorization': f'Bearer {token}',
                  'Content-Type': 'application/json'}
     )
-
-    print(remove_response.status_code)
-    print(remove_response.json())
 
     # return response
     return jsonify(remove_response.json(), remove_response.status_code)
@@ -277,9 +299,6 @@ def create_playlist():
         headers={'Authorization': f'Bearer {token}',
                  'Content-Type': 'application/json'}
     )
-
-    print(playlist_add_response.status_code)
-    print(playlist_add_response.json())
 
     return jsonify(playlist_add_response.json())
 
