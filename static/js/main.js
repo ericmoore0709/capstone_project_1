@@ -1,5 +1,3 @@
-const BASE_URI = "http://localhost:5000";
-
 /**
  * Appends an alert to the alert container.
  * @param {string} message the alert message
@@ -26,7 +24,7 @@ $('#search_input').keyup(async (e) => {
         return;
     }
 
-    await axios.post(`${BASE_URI}/searchbar`, {
+    await axios.post('/searchbar', {
         q: searchTerm
     })
         .then((result) => {
@@ -88,7 +86,7 @@ $('#add_track_to_playlist_form').submit(async (e) => {
     let $resultMsg = $('<p></p>').addClass('list-group-item');
 
     // create backend API request
-    await axios.post(`${BASE_URI}/addtrack`, {
+    await axios.post('/addtrack', {
         'track_uri': trackUri,
         'playlist_id': playlistId
     })
@@ -120,7 +118,7 @@ $('.track_remove').submit(async function (e) {
     const trackUri = $(this).find('input[name="track_uri"]').val();
     const playlistId = $(this).find('input[name="playlist_id"]').val();
 
-    await axios.delete(`${BASE_URI}/playlists/${playlistId}/tracks`, {
+    await axios.delete(`/playlists/${playlistId}/tracks`, {
         data: { 'track_uri': trackUri }
     })
         .then((result) => {
@@ -146,7 +144,7 @@ $('#playlist_create_form').submit(async (e) => {
         return;
     }
 
-    await axios.post(`${BASE_URI}/playlists`, {
+    await axios.post('/playlists', {
         title: title,
         description: description
     })
