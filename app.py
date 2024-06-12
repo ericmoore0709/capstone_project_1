@@ -14,10 +14,14 @@ SPOTIFY_CLIENT_SECRET = os.environ.get('SPOTIFY_CLIENT_SECRET')
 SPOTIFY_CLIENT_SCOPE = os.environ.get('SPOTIFY_CLIENT_SCOPE')
 SPOTIFY_CLIENT_REDIRECT_URI = os.environ.get('SPOTIFY_CLIENT_REDIRECT_URI')
 
+
 BASE_URI = 'https://api.spotify.com/v1'
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = str(uuid4())
+if __name__ == 'main':
+    PORT = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=PORT)
 
 
 @app.get('/')
