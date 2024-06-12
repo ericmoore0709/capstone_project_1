@@ -294,7 +294,7 @@ def create_playlist():
         return jsonify({'error': 'title is required'})
 
     playlist_add_response = requests.post(
-        (f'{BASE_URI}/users/{session.get('user_id')}/playlists'),
+        (f'{BASE_URI}/users/{session['user_id']}/playlists'),
         json={'name': title, 'description': description},
         headers={'Authorization': f'Bearer {token}',
                  'Content-Type': 'application/json'}
