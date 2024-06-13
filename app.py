@@ -30,10 +30,10 @@ def index():
 
     # if logged in, direct to dashboard
     if session.get('token'):
-        return render_template('dashboard.html')
+        return render_template('dashboard.html', title='Dashboard')
 
     # else, direct to landing page
-    return render_template('/index.html')
+    return render_template('/index.html', title='Landing Page')
 
 
 @app.get('/authorize')
@@ -137,7 +137,7 @@ def display_playlists():
         playlists_json = requests.get(
             (BASE_URI + '/me/playlists'), headers={'Authorization': ('Bearer ' + token)}).json()
         playlists = playlists_json.get('items', [])
-        return render_template('playlists.html', playlists=playlists)
+        return render_template('playlists.html', playlists=playlists, title='My Playlists')
 
     except Exception as err:
         print(type(err).__name__ + ': ' + str(err))
@@ -163,7 +163,8 @@ def display_playlist_details(playlist_id: str):
         # display the playlist if successful
         if playlist_response.status_code == 200:
             playlist_json = playlist_response.json()
-            return render_template('playlist.html', playlist=playlist_json)
+            playlist_title = playlist_json.get('name')
+            return render_template('playlist.html', playlist=playlist_json, title=playlist_title)
 
     except Exception as err:
         # there was an error. Alert the user and redirect to playlist list page
@@ -217,7 +218,9 @@ def display_track(track_id: str):
         playlists = [(playlist.get('id'), playlist.get('name'))
                      for playlist in playlist_response.get('items') if playlist.get('owner').get('id') == session['user_id']]
 
-        return render_template('track.html', track=track_response.json(), playlists=playlists)
+        track_name = track_response.get('name')
+
+        return render_template('track.html', track=track_response.json(), playlists=playlists, title=track_name)
 
     except Exception as err:
         print(err)
