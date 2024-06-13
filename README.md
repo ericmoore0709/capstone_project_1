@@ -77,7 +77,7 @@ The API calls are managed through Python requests in the Flask backend, ensuring
 - **Frontend**: HTML, CSS (Bootstrap), JavaScript (jQuery, Axios)
 - **Authentication**: OAuth2 (Spotify)
 - **Environment Management**: Python-dotenv
-- **Hosting**: Deployed on a suitable hosting service (e.g., Heroku, AWS)
+- **Hosting**: Deployed on Render
 
 ## Additional Notes
 
