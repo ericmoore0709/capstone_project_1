@@ -218,7 +218,7 @@ def display_track(track_id: str):
         playlists = [(playlist.get('id'), playlist.get('name'))
                      for playlist in playlist_response.get('items') if playlist.get('owner').get('id') == session['user_id']]
 
-        track_name = track_response.get('name')
+        track_name = track_response.json().get('name')
 
         return render_template('track.html', track=track_response.json(), playlists=playlists, title=track_name)
 
