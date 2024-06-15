@@ -205,27 +205,35 @@ def display_track(track_id: str):
     if not token:
         return redirect('/')
 
-    try:
-        # retrieve the track from the Spotify API
-        track_response = requests.get(
-            (BASE_URI + '/tracks/' + track_id), headers={'Authorization': ('Bearer ' + token)})
+    # try:
+    # retrieve the track from the Spotify API
+    track_response = requests.get(
+        (BASE_URI + '/tracks/' + track_id), headers={'Authorization': ('Bearer ' + token)})
 
-        # retrieve the list of playlists for playlist selection
-        playlist_response = requests.get(
-            (BASE_URI + '/me/playlists'), headers={'Authorization': ('Bearer ' + token)}).json()
+    album_id = track_response.json().get('album').get('id')
 
-        # filter in only the id and name of each playlist (because we don't need the rest)
-        playlists = [(playlist.get('id'), playlist.get('name'))
-                     for playlist in playlist_response.get('items') if playlist.get('owner').get('id') == session['user_id']]
+    # retrieve the album the track belongs to
+    album_response = requests.get(
+        (BASE_URI + '/albums/' + album_id),
+        headers={'Authorization': ('Bearer ' + token)}
+    )
 
-        track_name = track_response.json().get('name')
+    # retrieve the list of playlists for playlist selection
+    playlist_response = requests.get(
+        (BASE_URI + '/me/playlists'), headers={'Authorization': ('Bearer ' + token)}).json()
 
-        return render_template('track.html', track=track_response.json(), playlists=playlists, title=track_name)
+    # filter in only the id and name of each playlist (because we don't need the rest)
+    playlists = [(playlist.get('id'), playlist.get('name'))
+                    for playlist in playlist_response.get('items') if playlist.get('owner').get('id') == session['user_id']]
 
-    except Exception as err:
-        print(err)
-        flash('Failed to retrieve track. Please try again.', 'danger')
-        return redirect('/')
+    track_name = track_response.json().get('name')
+
+    return render_template('album.html', track=track_response.json(), playlists=playlists, title=track_name, album=album_response.json())
+
+    # except Exception as err:
+    #     print(err)
+    #     flash('Failed to retrieve track. Please try again.', 'danger')
+    #     return redirect('/')
 
 
 @app.post('/addtrack')

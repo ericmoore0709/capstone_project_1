@@ -1,0 +1,12 @@
+{% extends 'layout/base.html' %}
+{% block content %}
+<div class="container bg-dark text-center">
+    <img src="{{album.images[0].url}}" alt="Album cover photo for {{album.name}}" />
+    <h1 class="text-light">{{album.name}}</h1>
+    <div class="list-item-group">
+        {% for album_track in album.get('tracks').get('items') %}
+        <div class="list-item my-2 ">{{album_track.name}}</div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
