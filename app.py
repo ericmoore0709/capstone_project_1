@@ -84,8 +84,8 @@ def on_redirect():
     try:
         code = request.args.get('code', '')
         if code:
-            basic_auth_encode = f"{Config.SPOTIFY_CLIENT_ID}:{
-                Config.SPOTIFY_CLIENT_SECRET}"
+            basic_auth_encode = f"""{Config.SPOTIFY_CLIENT_ID}:{
+                Config.SPOTIFY_CLIENT_SECRET}"""
             encoded_auth = b64encode(
                 basic_auth_encode.encode('utf-8')).decode()
             token_response = requests.post('https://accounts.spotify.com/api/token',
