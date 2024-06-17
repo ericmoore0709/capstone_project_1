@@ -294,8 +294,8 @@ def _get_userid():
             else:
                 raise Exception('Failed to retrieve user_id from user_data.')
         else:
-            raise Exception(f'user_data returned status code of {
-                            user_data.status_code}')
+            raise Exception(f'''user_data returned status code of {
+                            user_data.status_code}''')
     except Exception as e:
         app.logger.error(f'Get UserID Error: {e}')
         return None
