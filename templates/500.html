@@ -1,0 +1,12 @@
+{% extends 'layout/base.html' %}
+{% block content %}
+
+<div id="content" class="container d-flex flex-column justify-content-center align-items-center"
+    style="min-height: 80vh;">
+    <h1>500 - Internal Server Error</h1>
+    <p>Sorry, something went wrong on our end.</p>
+    <p>Please try again later or contact support if the problem persists.</p>
+    <a href="{{ url_for('index') }}" class="btn btn-primary mt-3" aria-label="Go to Homepage">Go to Homepage</a>
+</div>
+
+{% endblock %}
