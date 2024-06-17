@@ -69,8 +69,8 @@ def authorize():
 
         # build authorization URL and redirect
         auth_url = 'https://accounts.spotify.com/authorize/'
-        auth_url_str = f"{auth_url}?client_id={Config.SPOTIFY_CLIENT_ID}&response_type=code&redirect_uri={
-            Config.SPOTIFY_CLIENT_REDIRECT_URI}&scope={Config.SPOTIFY_CLIENT_SCOPE}&state={session_state}"
+        auth_url_str = f"""{auth_url}?client_id={Config.SPOTIFY_CLIENT_ID}&response_type=code&redirect_uri={
+            Config.SPOTIFY_CLIENT_REDIRECT_URI}&scope={Config.SPOTIFY_CLIENT_SCOPE}&state={session_state}"""
         return redirect(auth_url_str)
     except Exception as e:
         app.logger.error(f'Authorization Error: {e}')
