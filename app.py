@@ -2,15 +2,16 @@ import logging
 from logging.handlers import RotatingFileHandler
 from flask import Flask, flash, jsonify, render_template, redirect, request, session
 from flask_migrate import Migrate
-from models import PlaylistMetadata, User, db, connect_db
-import requests
+from model_util import filter_playlists_for_track_insert, get_user, set_playlists, set_user
+from models import db, connect_db
 from dotenv import load_dotenv
 from config import Config
-from base64 import b64encode
 from uuid import uuid4
-from datetime import datetime, UTC
 import os
 from functools import wraps
+
+from spotify import Spotify
+
 
 load_dotenv('.env')
 
@@ -21,6 +22,16 @@ handler.setLevel(logging.INFO)
 app = Flask(__name__)
 app.config.from_object(Config)
 app.logger.addHandler(handler)
+
+# initialize homemade Spotify requests handler.
+spotify = Spotify(
+    secrets={
+        'SPOTIFY_CLIENT_ID': Config.SPOTIFY_CLIENT_ID,
+        'SPOTIFY_CLIENT_REDIRECT_URI': Config.SPOTIFY_CLIENT_REDIRECT_URI,
+        'SPOTIFY_CLIENT_SCOPE': Config.SPOTIFY_CLIENT_SCOPE,
+        'SPOTIFY_CLIENT_SECRET': Config.SPOTIFY_CLIENT_SECRET
+    }
+)
 
 # Initialize database and migrations
 connect_db(app)
@@ -67,10 +78,8 @@ def authorize():
         session_state = str(uuid4())
         session['state'] = session_state
 
-        # build authorization URL and redirect
-        auth_url = 'https://accounts.spotify.com/authorize/'
-        auth_url_str = f"""{auth_url}?client_id={Config.SPOTIFY_CLIENT_ID}&response_type=code&redirect_uri={
-            Config.SPOTIFY_CLIENT_REDIRECT_URI}&scope={Config.SPOTIFY_CLIENT_SCOPE}&state={session_state}"""
+        # redirect to Spotify auth url
+        auth_url_str = spotify.build_auth_url(session_state)
         return redirect(auth_url_str)
     except Exception as e:
         app.logger.error(f'Authorization Error: {e}')
@@ -84,45 +93,37 @@ def on_redirect():
     try:
         code = request.args.get('code', '')
         if code:
-            basic_auth_encode = f"""{Config.SPOTIFY_CLIENT_ID}:{
-                Config.SPOTIFY_CLIENT_SECRET}"""
-            encoded_auth = b64encode(
-                basic_auth_encode.encode('utf-8')).decode()
-            token_response = requests.post('https://accounts.spotify.com/api/token',
-                                           data={
-                                               'code': code,
-                                               'redirect_uri': Config.SPOTIFY_CLIENT_REDIRECT_URI,
-                                               'grant_type': 'authorization_code'
-                                           },
-                                           headers={
-                                               'content-type': 'application/x-www-form-urlencoded',
-                                               'Authorization': f'Basic {encoded_auth}'
-                                           }).json()
+            # Post to Spotify token API
+            result = spotify.get_token(code)
 
-            if 'error' in token_response:
-                flash(token_response['error'], 'danger')
+            # handle error if exists
+            if result == 'error':
+                flash('Error retrieving user token. Please try again later.', 'danger')
                 return redirect('/')
             else:
-                access_token = token_response.get('access_token')
-                refresh_token = token_response.get('refresh_token')
+
+                # get data from API result
+                access_token = result.get('access_token')
+                refresh_token = result.get('refresh_token')
+                user_id = result.get('user_id')
+
+                # set session variables
                 session['token'] = access_token
                 session['refresh_token'] = refresh_token
-                user_id = _get_userid()
                 session['user_id'] = user_id
 
-                user = User.query.filter_by(spotify_id=user_id).first()
-                if user is None:
-                    user = User(
-                        spotify_id=user_id, access_token=access_token, refresh_token=refresh_token)
-                    db.session.add(user)
-                else:
-                    user.access_token = access_token
-                    user.refresh_token = refresh_token
+                # set and persist user info
+                set_user(
+                    user_id=user_id,
+                    access_token=access_token,
+                    refresh_token=refresh_token
+                )
 
-                db.session.commit()
+                # redirect user with success message
                 flash('Authorization successful!', 'success')
                 return redirect('/')
         else:
+            # handle auth code (not token) error
             error = request.args.get('error', '')
             if error:
                 app.logger.error(f'Spotify Redirect Error: {error}')
@@ -149,23 +150,17 @@ def process_logout():
 def display_playlists():
     """Display the list of playlists saved to the user's library."""
     try:
-        playlists_json = requests.get(
-            f'{BASE_URI}/me/playlists', headers={'Authorization': f'Bearer {session["token"]}'}).json()
-        playlists = playlists_json.get('items', [])
 
-        user = User.query.filter_by(spotify_id=session['user_id']).first()
+        # get the user's playlists from the Spotify API
+        playlists = spotify.get_user_playlists(token=session['token'])
 
-        for playlist in playlists:
-            metadata = PlaylistMetadata.query.filter_by(
-                user_id=user.id, playlist_id=playlist['id']).first()
-            if metadata is None:
-                metadata = PlaylistMetadata(
-                    user_id=user.id, playlist_id=playlist['id'], last_synced=datetime.now(UTC))
-                db.session.add(metadata)
-            else:
-                metadata.last_synced = datetime.now(UTC)
+        # get the user from the database via session user ID
+        user = get_user(session['user_id'])
 
-        db.session.commit()
+        # updated playlists with metadata
+        set_playlists(playlists=playlists, user=user)
+
+        # direct user to playlist list page
         return render_template('playlists.html', playlists=playlists, title='My Playlists')
     except Exception as e:
         app.logger.error(f'Display Playlists Error: {e}')
@@ -178,12 +173,19 @@ def display_playlists():
 def display_playlist_details(playlist_id: str):
     """Display the tracklist of the selected playlist."""
     try:
-        playlist_response = requests.get(f'{BASE_URI}/playlists/{playlist_id}', headers={
-                                         'Authorization': f'Bearer {session["token"]}'})
-        if playlist_response.status_code == 200:
-            playlist_json = playlist_response.json()
-            playlist_title = playlist_json.get('name')
-            return render_template('playlist.html', playlist=playlist_json, title=playlist_title)
+
+        # get playlist details from Spotify
+        result = spotify.get_playlist_details(
+            playlist_id=playlist_id,
+            token=session['token']
+        )
+
+        # set variables for page details
+        playlist_json = result.get('playlist_json')
+        playlist_title = result.get('playlist_title')
+
+        # direct user to playlist details page
+        return render_template('playlist.html', playlist=playlist_json, title=playlist_title)
     except Exception as e:
         app.logger.error(f'Display Playlist Details Error: {e}')
         flash('Failed to retrieve playlist details.', 'danger')
@@ -195,10 +197,12 @@ def display_playlist_details(playlist_id: str):
 def retrieve_search_results():
     """JSON Query tracks for the navbar searchbar."""
     try:
+        # get the search term from the request
         search_term = request.json.get('q', '')
-        search_request = requests.get(f'{BASE_URI}/search', params={'q': search_term, 'limit': 5,
-                                      'type': 'track'}, headers={'Authorization': f'Bearer {session["token"]}'})
-        return search_request.json()
+
+        # process the search term and return the results
+        return spotify.process_search_request(search_term=search_term, token=session['token'])
+
     except Exception as e:
         app.logger.error(f'Search Error: {e}')
         flash('Backend search failed. Please try again.', 'danger')
@@ -210,14 +214,23 @@ def retrieve_search_results():
 def display_track(track_id: str):
     """Display the selected track (likely to add to a playlist)."""
     try:
-        track_response = requests.get(
-            f'{BASE_URI}/tracks/{track_id}', headers={'Authorization': f'Bearer {session["token"]}'})
-        playlist_response = requests.get(
-            f'{BASE_URI}/me/playlists', headers={'Authorization': f'Bearer {session["token"]}'}).json()
-        playlists = [(playlist.get('id'), playlist.get('name')) for playlist in playlist_response.get(
-            'items') if playlist.get('owner').get('id') == session['user_id']]
-        track_name = track_response.json().get('name')
-        return render_template('track.html', track=track_response.json(), playlists=playlists, title=track_name)
+        token = session['token']
+
+        # get the track to retrieve
+        track = spotify.get_track(track_id=track_id, token=token)
+
+        # get the user's playlists
+        unfiltered_playlists = spotify.get_user_playlists(token=token)
+
+        # filter these playlists by user's ownership, as well as mapping them to (id, name) tuples.
+        filtered_playlists = filter_playlists_for_track_insert(
+            playlists=unfiltered_playlists, user_id=session['user_id'])
+
+        # get the track name (for the page title)
+        track_name = track.get('name')
+
+        # direct user to track page
+        return render_template('track.html', track=track, playlists=filtered_playlists, title=track_name)
     except Exception as e:
         app.logger.error(f'Display Track Error: {e}')
         flash('Failed to retrieve track. Please try again.', 'danger')
@@ -235,9 +248,14 @@ def add_track_to_playlist():
         return jsonify({'error': 'Playlist required.'})
 
     try:
-        action_response = requests.post(f'{BASE_URI}/playlists/{playlist_id}/tracks', json={
-                                        'uris': [track_uri]}, headers={'Authorization': f'Bearer {session["token"]}'})
-        return action_response.json()
+
+        result = spotify.add_track_to_playlist(
+            playlist_id=playlist_id,
+            track_uri=track_uri,
+            token=session['token']
+        )
+
+        return result
     except Exception as e:
         app.logger.error(f'Add Track Error: {e}')
         return jsonify({'error': 'Internal error occurred.'})
@@ -250,9 +268,13 @@ def remove_track(playlist_id: str):
     track_uri = request.json.get('track_uri', '')
 
     try:
-        remove_response = requests.delete(f'{BASE_URI}/playlists/{playlist_id}/tracks', json={
-                                          'tracks': [{'uri': track_uri}]}, headers={'Authorization': f'Bearer {session["token"]}'})
-        return jsonify(remove_response.json(), remove_response.status_code)
+        result = spotify.remove_track_from_playlist(
+            playlist_id=playlist_id,
+            track_uri=track_uri,
+            token=session['token']
+        )
+
+        return result
     except Exception as e:
         app.logger.error(f'Remove Track Error: {e}')
         return jsonify({'error': 'Internal error occurred.'})
@@ -269,36 +291,23 @@ def create_playlist():
         return jsonify({'error': 'Title is required'})
 
     try:
+        # get the session user id
         user_id = session.get('user_id')
-        playlist_add_response = requests.post(f'{BASE_URI}/users/{user_id}/playlists', json={'name': title, 'description': description}, headers={
-                                              'Authorization': f'Bearer {session["token"]}', 'Content-Type': 'application/json'})
-        return jsonify(playlist_add_response.json())
+
+        # attempt to create the spotify playlist
+        result = spotify.create_playlist(
+            user_id=user_id,
+            playlist_title=title,
+            playlist_description=description,
+            token=session['token']
+        )
+
+        # return the persistence result
+        return result
+
     except Exception as e:
         app.logger.error(f'Create Playlist Error: {e}')
         return jsonify({'error': 'Internal error occurred.'})
-
-
-def _get_userid():
-    """Returns the user ID from the auth token."""
-    token = session.get('token', '')
-    if not token:
-        return None
-
-    try:
-        user_data = requests.get(
-            f'{BASE_URI}/me', headers={'Authorization': f'Bearer {token}'})
-        if user_data.status_code == 200:
-            user_id = user_data.json().get('id')
-            if user_id:
-                return user_id
-            else:
-                raise Exception('Failed to retrieve user_id from user_data.')
-        else:
-            raise Exception(f'''user_data returned status code of {
-                            user_data.status_code}''')
-    except Exception as e:
-        app.logger.error(f'Get UserID Error: {e}')
-        return None
 
 
 @app.errorhandler(404)

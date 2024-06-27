@@ -1,1 +1,7 @@
 Authorization Redirect Error: name 'redirrect' is not defined
+Authorization Error: Spotify.build_auth_url() takes 1 positional argument but 2 were given
+Authorization Redirect Error: module 'flask.app' has no attribute 'logger'
+Authorization Error: Header values must not contain newline characters.
+Authorization Redirect Error: Spotify._get_userid() missing 1 required positional argument: 'token'
+Display Playlists Error: Spotify.get_user_playlists() missing 1 required positional argument: 'token'
+Display Track Error: 'list' object has no attribute 'get'
