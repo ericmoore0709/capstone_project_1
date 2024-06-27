@@ -58,7 +58,8 @@ class Spotify:
                                        }).json()
 
         if 'error' in token_response:
-            print(f'Spotify Token Error: {token_response['error']}')
+            error = token_response['error']
+            print(f'Spotify Token Error: {error}')
             return 'error'
         else:
             access_token = token_response.get('access_token')
