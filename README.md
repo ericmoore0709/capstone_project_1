@@ -38,11 +38,11 @@ The Spotify Playlist Manager is a web application that integrates with the Spoti
 
 ## User Flow
 
-1. **Landing Page**:
-    - Users are greeted with a landing page where they can log in using their Spotify credentials.
+1. **Login**:
+    - Users log in with their Spotify credentials.
 
-2. **Dashboard**:
-    - After logging in, users are redirected to the dashboard where they can see a list of their playlists.
+2. **View Playlists**:
+    - Users can see a list of their playlists.
 
 3. **View Playlist**:
     - Users can click on a playlist to view its details, including the list of tracks.
@@ -78,6 +78,69 @@ The API calls are managed through Python requests in the Flask backend, ensuring
 - **Authentication**: OAuth2 (Spotify)
 - **Environment Management**: Python-dotenv
 - **Hosting**: Deployed on Render
+
+## Setup Guide
+
+### Prerequisites
+
+- Python 3.x
+- Flask
+- Spotify Developer Account
+- Git
+
+### Installation
+
+1. **Clone the Repository**:
+    ```sh
+    git clone https://github.com/yourusername/spotify-playlist-manager.git
+    cd spotify-playlist-manager
+    ```
+
+2. **Create a Virtual Environment**:
+    ```sh
+    python -m venv venv
+    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+    ```
+
+3. **Install Dependencies**:
+    ```sh
+    pip install -r requirements.txt
+    ```
+
+4. **Set Up Environment Variables**:
+    - Create a `.env` file in the project root and add your Spotify API credentials and any other necessary configuration variables. Example:
+    ```sh
+    SPOTIFY_CLIENT_ID=your_spotify_client_id
+    SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
+    SECRET_KEY=your_flask_secret_key
+    ```
+
+5. **Run the Application**:
+    ```sh
+    flask run
+    ```
+
+    The application should now be running on `http://127.0.0.1:5000`.
+
+### Running Tests
+
+1. **Install Test Dependencies**:
+    ```sh
+    pip install -r requirements-test.txt
+    ```
+
+2. **Run Tests**:
+    ```sh
+    pytest
+    ```
+
+### Common Issues and Troubleshooting
+
+- **Invalid Redirect URI**:
+    - Ensure the redirect URI configured in the Spotify Developer Dashboard matches the redirect URI used in your application.
+  
+- **API Rate Limits**:
+    - Be aware of Spotify API rate limits and handle rate limit responses appropriately in your application.
 
 ## Additional Notes
 
